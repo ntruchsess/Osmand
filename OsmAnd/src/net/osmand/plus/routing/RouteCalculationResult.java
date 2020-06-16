@@ -54,6 +54,7 @@ public class RouteCalculationResult {
 	private final int visitedSegments;
 	private final int loadedTiles;
 	private final float calculateTime;
+	private final long creationTime;
 
 	protected int cacheCurrentTextDirectionInfo = -1;
 	protected List<RouteDirectionInfo> cacheAgreggatedDirections;
@@ -92,6 +93,7 @@ public class RouteCalculationResult {
 		this.appMode = null;
 		this.routeRecalcDistance = 0;
 		this.routeVisibleAngle = 0;
+		this.creationTime = System.currentTimeMillis();
 	}
 
 	public RouteCalculationResult(List<Location> list, List<RouteDirectionInfo> directions, RouteCalculationParams params, List<LocationPoint> waypoints, boolean addMissingTurns) {
@@ -134,6 +136,7 @@ public class RouteCalculationResult {
 			this.routeRecalcDistance = 0;
 			this.routeVisibleAngle = 0;
 		}
+		this.creationTime = System.currentTimeMillis();
 	}
 
 	public RouteCalculationResult(List<RouteSegmentResult> list, Location start, LatLon end, List<LatLon> intermediates,
@@ -180,6 +183,7 @@ public class RouteCalculationResult {
 		this.routeRecalcDistance = ctx.getSettings().ROUTE_RECALCULATION_DISTANCE.getModeValue(mode);
 		this.routeVisibleAngle = routeService == RouteProvider.RouteService.STRAIGHT ?
 				ctx.getSettings().ROUTE_STRAIGHT_ANGLE.getModeValue(mode) : 0;
+		this.creationTime = System.currentTimeMillis();
 	}
 
 	public ApplicationMode getAppMode() {
@@ -987,6 +991,10 @@ public class RouteCalculationResult {
 
 	public float getCalculateTime() {
 		return calculateTime;
+	}
+
+	public long getCreationTime() {
+		return creationTime;
 	}
 
 	public int getLoadedTiles() {

@@ -49,10 +49,12 @@ import net.osmand.IProgress;
 import net.osmand.IndexConstants;
 import net.osmand.Location;
 import net.osmand.PlatformUtil;
+import net.osmand.aidl.calculateroute.CalculatedRoute;
 import net.osmand.aidl.gpx.AGpxFile;
 import net.osmand.aidl.gpx.AGpxFileDetails;
 import net.osmand.aidl.gpx.ASelectedGpxFile;
 import net.osmand.aidl.navigation.ADirectionInfo;
+import net.osmand.aidl.navigation.NavigationStatus;
 import net.osmand.aidl.navigation.OnVoiceNavigationParams;
 import net.osmand.aidl.quickaction.QuickActionInfoParams;
 import net.osmand.aidl.tiles.ASqliteDbFile;
@@ -64,6 +66,7 @@ import net.osmand.aidlapi.info.GetTextParams;
 import net.osmand.aidlapi.logcat.OnLogcatMessageParams;
 import net.osmand.aidlapi.map.ALatLon;
 import net.osmand.aidlapi.map.ALocation;
+import net.osmand.aidlapi.map.ALocationType;
 import net.osmand.aidlapi.navigation.ABlockedRoad;
 import net.osmand.aidlapi.navigation.NavigateGpxParams;
 import net.osmand.data.FavouritePoint;
@@ -72,8 +75,8 @@ import net.osmand.data.PointDescription;
 import net.osmand.gpx.GPXFile;
 import net.osmand.gpx.GPXTrackAnalysis;
 import net.osmand.gpx.GPXUtilities;
-import net.osmand.plus.AppInitializer;
 import net.osmand.plus.AppInitializeListener;
+import net.osmand.plus.AppInitializer;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.Version;
@@ -105,6 +108,7 @@ import net.osmand.plus.quickaction.MapButtonsHelper;
 import net.osmand.plus.quickaction.QuickAction;
 import net.osmand.plus.resources.SQLiteTileSource;
 import net.osmand.plus.routing.IRoutingDataUpdateListener;
+import net.osmand.plus.routing.RouteCalculationResult;
 import net.osmand.plus.routing.RouteCalculationResult.NextDirectionInfo;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.routing.VoiceRouter;
@@ -1110,6 +1114,201 @@ public class OsmandAidlApi {
 		return true;
 	}
 
+	public ALocation getLocation(net.osmand.aidl.map.ALocationType locationType) {
+		RoutingHelper rh = app.getRoutingHelper();
+		switch (locationType) {
+			case CURRENT:
+				Location location = rh.getLastFixedLocation();
+				return new ALocation(
+						location.getLatitude(),
+						location.getLongitude(),
+						location.getTime(),
+						location.hasAltitude(),
+						location.getAltitude(),
+						location.hasSpeed(),
+						location.getSpeed(),
+						location.hasBearing(),
+						location.getBearing(),
+						location.hasAccuracy(),
+						location.getAccuracy(),
+						location.hasVerticalAccuracy(),
+						location.getVerticalAccuracy()
+				);
+			case PROJECTION:
+				Location projection = rh.getLastProjection();
+				return new ALocation(
+						projection.getLatitude(),
+						projection.getLongitude(),
+						projection.getTime(),
+						projection.hasAltitude(),
+						projection.getAltitude(),
+						projection.hasSpeed(),
+						projection.getSpeed(),
+						projection.hasBearing(),
+						projection.getBearing(),
+						projection.hasAccuracy(),
+						projection.getAccuracy(),
+						projection.hasVerticalAccuracy(),
+						projection.getVerticalAccuracy()
+				);
+			case ROUTE_END:
+				LatLon finalLocation = rh.getFinalLocation();
+				return new ALocation(
+						finalLocation.getLatitude(),
+						finalLocation.getLongitude(),
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0
+				);
+		}
+		return null;
+	}
+
+	public ALocation getLocationV2(ALocationType locationType) {
+		RoutingHelper rh = app.getRoutingHelper();
+		switch (locationType) {
+			case CURRENT:
+				Location location = rh.getLastFixedLocation();
+				return new ALocation(
+						location.getLatitude(),
+						location.getLongitude(),
+						location.getTime(),
+						location.hasAltitude(),
+						location.getAltitude(),
+						location.hasSpeed(),
+						location.getSpeed(),
+						location.hasBearing(),
+						location.getBearing(),
+						location.hasAccuracy(),
+						location.getAccuracy(),
+						location.hasVerticalAccuracy(),
+						location.getVerticalAccuracy()
+				);
+			case PROJECTION:
+				Location projection = rh.getLastProjection();
+				return new ALocation(
+						projection.getLatitude(),
+						projection.getLongitude(),
+						projection.getTime(),
+						projection.hasAltitude(),
+						projection.getAltitude(),
+						projection.hasSpeed(),
+						projection.getSpeed(),
+						projection.hasBearing(),
+						projection.getBearing(),
+						projection.hasAccuracy(),
+						projection.getAccuracy(),
+						projection.hasVerticalAccuracy(),
+						projection.getVerticalAccuracy()
+				);
+			case ROUTE_END:
+				LatLon finalLocation = rh.getFinalLocation();
+				return new ALocation(
+						finalLocation.getLatitude(),
+						finalLocation.getLongitude(),
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0,
+						false,
+						0
+				);
+		}
+		return null;
+	}
+
+	public NavigationStatus getNavigationStatus() {
+		RoutingHelper routingHelper = app.getRoutingHelper();
+		RouteCalculationResult route = routingHelper.getRoute();
+
+		return new NavigationStatus(
+				route.getCurrentRoute(),
+				route.getCurrentMaxSpeed(),
+				routingHelper.getLeftDistance(),
+				routingHelper.getLeftTime(),
+				routingHelper.getLeftDistanceNextIntermediate(),
+				routingHelper.getLeftTimeNextIntermediate(),
+				routingHelper.isRouteCalculated(),
+				routingHelper.isRouteWasFinished(),
+				routingHelper.isPauseNavigation(),
+				routingHelper.isDeviatedFromRoute()
+		);
+    }
+
+    public CalculatedRoute getCalculatedRoute() {
+        RoutingHelper routingHelper = app.getRoutingHelper();
+		boolean isRouteCalculated = routingHelper.isRouteCalculated();
+		CalculatedRoute calculatedRoute = new CalculatedRoute();
+
+		calculatedRoute.setRouteCalculated(isRouteCalculated);
+		calculatedRoute.setAppMode(routingHelper.getAppMode().getStringKey());
+
+		if (isRouteCalculated) {
+			RouteCalculationResult route = routingHelper.getRoute();
+
+			List<Location> locations = route.getImmutableAllLocations();
+			ArrayList<ALatLon> routePoints = new ArrayList<>(locations.size());
+			for (Location location : locations) {
+				routePoints.add(new ALatLon(location));
+			}
+
+			calculatedRoute.setRoutePoints(routePoints);
+			calculatedRoute.setRouteDistance(route.getWholeDistance());
+			calculatedRoute.setRoutingTime(route.getRoutingTime());
+			calculatedRoute.setCreationTime(route.getCreationTime());
+			calculatedRoute.setCalculationTime(route.getCalculateTime());
+		}
+		return calculatedRoute;
+    }
+
+	public net.osmand.aidlapi.calculateroute.CalculatedRoute getCalculatedRouteV2(){
+		RoutingHelper routingHelper = app.getRoutingHelper();
+		boolean isRouteCalculated = routingHelper.isRouteCalculated();
+		net.osmand.aidlapi.calculateroute.CalculatedRoute calculatedRoute = new net.osmand.aidlapi.calculateroute.CalculatedRoute();
+
+		calculatedRoute.setRouteCalculated(isRouteCalculated);
+		calculatedRoute.setAppMode(routingHelper.getAppMode().getStringKey());
+
+		if (isRouteCalculated) {
+			RouteCalculationResult route = routingHelper.getRoute();
+
+			List<Location> locations = route.getImmutableAllLocations();
+			ArrayList<net.osmand.aidlapi.map.ALatLon> routePoints = new ArrayList<>(locations.size());
+			for (Location location : locations) {
+				routePoints.add(new net.osmand.aidlapi.map.ALatLon(location.getLatitude(), location.getLongitude()));
+			}
+
+			calculatedRoute.setRoutePoints(routePoints);
+			calculatedRoute.setRouteDistance(route.getWholeDistance());
+			calculatedRoute.setRoutingTime(route.getRoutingTime());
+			calculatedRoute.setCreationTime(route.getCreationTime());
+			calculatedRoute.setCalculationTime(route.getCalculateTime());
+		}
+		return calculatedRoute;
+	}
+
+	public RouteCalculationResult getRoute() {
+		RoutingHelper rh = app.getRoutingHelper();
+		return rh.getRoute();
+	}
+
+	public ApplicationMode getApplicationMode() {
+		RoutingHelper rh = app.getRoutingHelper();
+		return rh.getAppMode();
+	}
 
 	boolean updateMapMarker(String prevName, LatLon prevLatLon, String newName, LatLon newLatLon, boolean ignoreCoordinates) {
 		LatLon latLon = new LatLon(prevLatLon.getLatitude(), prevLatLon.getLongitude());

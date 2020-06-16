@@ -1,6 +1,8 @@
 package net.osmand.aidlapi;
 
 import net.osmand.aidlapi.map.ALatLon;
+import net.osmand.aidlapi.map.ALocation;
+import net.osmand.aidlapi.map.ALocationType;
 import net.osmand.aidlapi.map.SetMapLocationParams;
 import net.osmand.aidlapi.map.SetLocationParams;
 
@@ -20,6 +22,7 @@ import net.osmand.aidlapi.mapmarker.RemoveMapMarkerParams;
 import net.osmand.aidlapi.mapmarker.UpdateMapMarkerParams;
 
 import net.osmand.aidlapi.calculateroute.CalculateRouteParams;
+import net.osmand.aidlapi.calculateroute.CalculatedRoute;
 
 import net.osmand.aidlapi.profile.ExportProfileParams;
 
@@ -46,6 +49,7 @@ import net.osmand.aidlapi.maplayer.UpdateMapLayerParams;
 
 import net.osmand.aidlapi.navigation.NavigateParams;
 import net.osmand.aidlapi.navigation.NavigateGpxParams;
+import net.osmand.aidlapi.navigation.NavigationStatus;
 
 import net.osmand.aidlapi.note.TakePhotoNoteParams;
 import net.osmand.aidlapi.note.StartVideoRecordingParams;
@@ -938,4 +942,29 @@ interface IOsmAndAidlInterface {
     long registerForLogcatMessages(in ALogcatListenerParams params, IOsmAndAidlCallback callback);
 
     boolean setZoomLimits(in ZoomLimitsParams params);
+
+    /**
+     * Method to get position of various objects
+     *
+     * @params locationType (ALocationType) - type of position to get (CURRENT - last fixed, PROJECTION - last projection, ROUTE_END end of the route)
+     */
+    boolean getLocation(in ALocationType locationType, out ALocation location);
+
+    /**
+     * Method to get application mode
+     *
+     */
+    String getApplicationMode();
+
+    /**
+     * Method to get current navigation status
+     *
+     */
+    boolean getNavigationStatus(out NavigationStatus status);
+
+    /**
+     * Method to get calculated route
+     *
+     */
+    boolean getCalculatedRoute(out CalculatedRoute route);
 }

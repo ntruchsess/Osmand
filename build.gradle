@@ -34,9 +34,9 @@ allprojects {
     repositories {
         ivy {
             name = "OsmAndBinariesIvy"
-            url = "https://creator.osmand.net"
+            url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "https://creator.osmand.net/ivy"
             patternLayout {
-                artifact "ivy/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+                artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
             }
         }
         google()

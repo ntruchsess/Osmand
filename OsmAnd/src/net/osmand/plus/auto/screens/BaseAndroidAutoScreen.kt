@@ -55,6 +55,41 @@ abstract class BaseAndroidAutoScreen(carContext: CarContext) : Screen(carContext
 		}
 	}
 
+	protected fun openExistingRouteDialog(
+		settingsAction: Action,
+		result: SearchResult
+	) {
+		screenManager.pushForResult(
+			ExistingRouteDialogScreen(carContext, settingsAction, result)
+		) {
+			(it as? ExistingRouteDialogScreen.Result)?.let {
+				when (it) {
+					ExistingRouteDialogScreen.Result.ADD_TO_ROUTE -> {
+						openAddToRouteDialog(settingsAction, result)
+						finish()
+					}
+					ExistingRouteDialogScreen.Result.REPLACE_ROUTE -> {
+						openRoutePreview(settingsAction, result)
+						finish()
+					}
+				}
+			}
+		}
+	}
+
+	protected fun openAddToRouteDialog(
+		settingsAction: Action,
+		result: SearchResult
+	) {
+		screenManager.pushForResult(
+			AddToRouteScreen(carContext, result)
+		) {
+			(it as? Int)?.let {
+				app.targetPointsHelper.navigateToPoint(result.location, true, it)
+			}
+		}
+	}
+
 	protected open fun onSearchResultSelected(result: SearchResult) {
 	}
 

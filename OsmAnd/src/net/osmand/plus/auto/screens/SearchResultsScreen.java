@@ -114,7 +114,11 @@ public final class SearchResultsScreen extends BaseSearchScreen implements Defau
 
 	private void showResult(SearchResult sr) {
 		showResult = false;
-		openRoutePreview(settingsAction, sr);
+		if (getApp().getTargetPointsHelper().getPointToNavigate() == null) {
+			openRoutePreview(settingsAction, sr);
+		} else {
+			openExistingRouteDialog(settingsAction, sr);
+		}
 	}
 
 	@Override

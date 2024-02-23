@@ -18,6 +18,10 @@ import androidx.car.app.ScreenManager;
 import androidx.car.app.Session;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.CarIcon;
+import androidx.car.app.model.Distance;
+import androidx.car.app.navigation.model.Destination;
+import androidx.car.app.navigation.model.Step;
+import androidx.car.app.navigation.model.TravelEstimate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -32,7 +36,6 @@ import net.osmand.plus.OsmAndLocationProvider.OsmAndLocationListener;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.auto.screens.LandingScreen;
-import net.osmand.plus.auto.screens.NavigationScreen;
 import net.osmand.plus.auto.screens.RequestPermissionScreen;
 import net.osmand.plus.auto.screens.RequestPermissionScreen.LocationPermissionCheckCallback;
 import net.osmand.plus.auto.screens.RequestPurchaseScreen;
@@ -72,7 +75,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 	public static final float ZOOM_OUT_BUTTON_SCALE_FACTOR = 0.9f;
 
 
-	NavigationScreen navigationScreen;
 	LandingScreen landingScreen;
 
 	RequestPurchaseScreen requestPurchaseScreen;
@@ -86,9 +88,26 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		getLifecycle().addObserver(this);
 	}
 
-	@Nullable
-	public NavigationScreen getNavigationScreen() {
-		return navigationScreen;
+	public void refreshScreen() {
+		landingScreen.invalidate();
+	}
+
+	public void updateTrip(
+			boolean navigating,
+			boolean rerouting,
+			boolean arrived,
+			@Nullable List<Destination> destinations,
+			@Nullable List<Step> steps,
+			@Nullable TravelEstimate destinationTravelEstimate,
+			@Nullable Distance stepRemainingDistance,
+			boolean shouldShowNextStep,
+			boolean shouldShowLanes,
+			@Nullable CarIcon junctionImage
+	) {
+	}
+
+	public void stopTrip() {
+		landingScreen.stopTrip();
 	}
 
 	public SurfaceRenderer getNavigationCarSurface() {
@@ -137,7 +156,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 			navigationCarSurface.handleRecenter();
 		}
 	}
-
 	private boolean isAppModeDerivedFromCar(ApplicationMode appMode) {
 		return appMode == ApplicationMode.CAR || appMode.isDerivedRoutingFrom(ApplicationMode.CAR);
 	}
@@ -193,7 +211,7 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		if (ACTION_NAVIGATE.equals(action)) {
 			CarToast.makeText(getCarContext(), "Navigation intent: " + intent.getDataString(), CarToast.LENGTH_LONG).show();
 		}
-		landingScreen = new LandingScreen(getCarContext(), settingsAction);
+		landingScreen = new LandingScreen(getCarContext(), settingsAction, this);
 
 		OsmandApplication app = getApp();
 		if (!InAppPurchaseUtils.isAndroidAutoAvailable(app)) {
@@ -290,14 +308,14 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		return requestLocationPermission();
 	}
 
-	public void startNavigation() {
-		createNavigationScreen();
-		getCarContext().getCarService(ScreenManager.class).push(navigationScreen);
+	public boolean isNavigationTemplate() {
+		return landingScreen.isNavigationTemplate();
 	}
 
-	private void createNavigationScreen() {
-		navigationScreen = new NavigationScreen(getCarContext(), settingsAction, this);
-		navigationCarSurface.setCallback(navigationScreen);
+	public void startNavigation() {
+		landingScreen.setNavigationTemplate(true);
+		navigationCarSurface.setCallback(landingScreen);
+		landingScreen.invalidate();
 	}
 
 	@Override
@@ -310,10 +328,8 @@ public class NavigationSession extends Session implements NavigationListener, Os
 	}
 
 	private void clearNavigationScreen() {
-		if (navigationScreen != null) {
-			navigationScreen.stopTrip();
-			navigationScreen = null;
-		}
+		landingScreen.stopTrip();
+		navigationCarSurface.setCallback(null);
 	}
 
 	@Override

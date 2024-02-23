@@ -20,7 +20,6 @@ import androidx.car.app.navigation.model.Trip;
 
 import net.osmand.Location;
 import net.osmand.StateChangedListener;
-import net.osmand.plus.auto.screens.NavigationScreen;
 import net.osmand.plus.auto.NavigationSession;
 import net.osmand.plus.auto.TripHelper;
 import net.osmand.plus.helpers.LocationServiceHelper;
@@ -274,10 +273,7 @@ public class NavigationService extends Service {
 					if (navigationManager != null) {
 						NavigationSession carNavigationSession = getApp().getCarNavigationSession();
 						if (carNavigationSession != null) {
-							NavigationScreen navigationScreen = carNavigationSession.getNavigationScreen();
-							if (navigationScreen != null) {
-								navigationScreen.stopTrip();
-							}
+							carNavigationSession.stopTrip();
 						}
 						carNavigationActive = false;
 						navigationManager.navigationEnded();
@@ -294,32 +290,28 @@ public class NavigationService extends Service {
 				&& routingHelper.isRouteCalculated() && routingHelper.isFollowingMode()) {
 			NavigationSession carNavigationSession = app.getCarNavigationSession();
 			if (carNavigationSession != null) {
-				NavigationScreen navigationScreen = carNavigationSession.getNavigationScreen();
-				if (navigationScreen == null) {
+				if (!carNavigationSession.isNavigationTemplate()) {
 					carNavigationSession.startNavigation();
-					navigationScreen = carNavigationSession.getNavigationScreen();
 				}
-				if (navigationScreen != null) {
-					float density = carNavigationSession.getNavigationCarSurface().getDensity();
-					if (density == 0) {
-						density = 1;
-					}
-					Trip trip = tripHelper.buildTrip(currentLocation, density);
-					navigationManager.updateTrip(trip);
+				float density = carNavigationSession.getNavigationCarSurface().getDensity();
+				if (density == 0) {
+					density = 1;
+				}
+				Trip trip = tripHelper.buildTrip(currentLocation, density);
+				navigationManager.updateTrip(trip);
 
-					List<Destination> destinations = null;
-					Destination destination = tripHelper.getLastDestination();
-					TravelEstimate destinationTravelEstimate = tripHelper.getLastDestinationTravelEstimate();
-					if (destination != null) {
-						destinations = Collections.singletonList(destination);
-					}
-					TravelEstimate lastStepTravelEstimate = tripHelper.getLastStepTravelEstimate();
-					navigationScreen.updateTrip(true, routingHelper.isRouteBeingCalculated(),
-							false/*routingHelper.isRouteWasFinished()*/,
-							destinations, trip.getSteps(), destinationTravelEstimate,
-							lastStepTravelEstimate != null ? lastStepTravelEstimate.getRemainingDistance() : null,
-							false, true, null);
+				List<Destination> destinations = null;
+				Destination destination = tripHelper.getLastDestination();
+				TravelEstimate destinationTravelEstimate = tripHelper.getLastDestinationTravelEstimate();
+				if (destination != null) {
+					destinations = Collections.singletonList(destination);
 				}
+				TravelEstimate lastStepTravelEstimate = tripHelper.getLastStepTravelEstimate();
+				carNavigationSession.updateTrip(true, routingHelper.isRouteBeingCalculated(),
+						false/*routingHelper.isRouteWasFinished()*/,
+						destinations, trip.getSteps(), destinationTravelEstimate,
+						lastStepTravelEstimate != null ? lastStepTravelEstimate.getRemainingDistance() : null,
+						false, true, null);
 			}
 		}
 	}
